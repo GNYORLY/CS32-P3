@@ -3,27 +3,33 @@
 
 #include "GraphObject.h"
 
-class ppl
+class Actor : public GraphObject
 {
-	//things that can be annoyed
-	//reg protester, hardcore protester, frackman
-	void getAnnoyed() 
-	{ 
-		//decrease health by 2 
+public:
+	Actor(int image, int startx, int starty, Direction facing, int health, float size = 1.0, int depth = 0) : GraphObject(image, startx, starty, facing, size = 1.0, depth = 0)
+	{
 	}
 	bool dead()
 	{
 		//this f() is prob not here
 		//if frackman's health <= 0 : set frackman object state to dead(student world should respond accordingly), play player give up sound
 	}
+	
+private:
+	//StudentWorld* m_sw;
 };
 
-class Actor : public GraphObject
+class ppl : public Actor
 {
-public:
-	Actor(int image, int startx, int starty, Direction facing, int health, float size = 1.0, int depth = 0) : GraphObject(image, startx, starty, facing, size = 1.0, depth = 0)
+	//things that can be annoyed
+	//reg protester, hardcore protester, frackman
+	void getAnnoyed() 
+	{ 
+		m_health -= 2;
+	}
+	int health()
 	{
-		m_health = health;
+		return m_health;
 	}
 private:
 	int m_health;
