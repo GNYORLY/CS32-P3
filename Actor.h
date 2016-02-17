@@ -6,33 +6,57 @@
 class Actor : public GraphObject
 {
 public:
-	Actor(int image, int startx, int starty, Direction facing, int health, float size = 1.0, int depth = 0) : GraphObject(image, startx, starty, facing, size = 1.0, depth = 0)
+	Actor(int image, int startx, int starty, Direction facing, float size, int depth) : GraphObject(image, startx, starty, facing, size = 1.0, depth = 0)
 	{
 	}
-	bool dead()
+
+	virtual void doSomething()
+	{}
+	
+	void setDead()
 	{
-		//this f() is prob not here
-		//if frackman's health <= 0 : set frackman object state to dead(student world should respond accordingly), play player give up sound
+		m_dead = true;
+	}
+
+	bool isDead() const
+	{
+		return m_dead;
 	}
 	
 private:
+	bool m_dead;
 	//StudentWorld* m_sw;
 };
 
 class ppl : public Actor
 {
-	//things that can be annoyed
-	//reg protester, hardcore protester, frackman
-	void getAnnoyed() 
+public:
+	ppl(int image, int x, int y, Direction dir, int health) : Actor(image, x, y, dir, 1.0, 0)
+	{
+		setVisible(true);
+		m_health = health;
+	}
+	virtual void getAnnoyed() 
 	{ 
 		m_health -= 2;
+		if (m_health <= 0)
+			setDead();
 	}
-	int health()
+	int health() const
 	{
 		return m_health;
 	}
+	void itemGet()
+	{}
 private:
 	int m_health;
+};
+
+class stuff : public Actor
+{
+public:
+	stuff(int image, int x, int y, Direction dir = right, float size = 1.0, int depth = 2) : Actor(image, x, y, dir, size, depth)
+	{}
 };
 
 class Protester : public Actor //can be annoyed, set dead, and pick up gold
@@ -197,18 +221,16 @@ public: //hardcore protestor image, face left, decide how many squares numSquare
 	*/
 };
 
-class FrackMan : public Actor  //one of frackmans base classes must have a pointer to studentworld via getWorld()(a f() from the base class that returns the pointer)
+class FrackMan : public ppl  //one of frackmans base classes must have a pointer to studentworld via getWorld()(a f() from the base class that returns the pointer)
 {
 public:   //can be annoyed, set dead, and pick up gold
-	FrackMan() : Actor(0, 30, 60, right, 10) //5 water, 1 sonar, 0 gold
+	FrackMan() : ppl(IID_PLAYER, 30, 60, right, 10) //5 water, 1 sonar, 0 gold
+	{}
+	void doSomething()
 	{
-		setVisible(true);
-	}
-	void doSomething() 
-	{
-		/*
-		if (frackman is not alive)
+		if (isDead())
 			return;
+		/*
 		if (frackman overlaps dirt)
 			call studentworld to:
 			Remove/destroy the Dirt objects from the 4x4 area occupied by the FrackMan (from x, y to x+3,y+3 inclusive)
@@ -241,7 +263,7 @@ public:   //can be annoyed, set dead, and pick up gold
 				reduce squirt count by one
 				play sound player squirt
 		////////both make sound and reduce squirt count, but only one actually squirts//////
-		hint:have frackman create squirt then have studentworld manage the rest		
+		hint:have frackman create squirt then have studentworld manage the rest
 			if (direction other than current direction)
 				turn frackman to that direction, but do not move
 			if (same direction && frackman is able to move in that direction(no rocks in the way and not out of the game area))
@@ -255,9 +277,19 @@ public:   //can be annoyed, set dead, and pick up gold
 				add gold object to the current x,y location
 				reduce gold count by 1
 				////////the gold nugget will start out visible but only live for 100 ticks, it can only be picked up by protesters/////////
-
 		*/
+	
+		
 	}
+	void getWorld()
+		{
+			//return a pointer to StudentWorld from a base class
+		}
+private:
+	int m_water = 5;
+	int m_gold = 0;
+	int m_sonar = 1;
+	//int m_oil = 0;
 };
 
 class squirt //can be set dead but not annoyed
@@ -280,13 +312,16 @@ public: //squirt image, (x,y) location specified by frackman, travel distance of
 	*/
 };
 
-class oil //cannot be annoyed, can be set dead
+class oil : public stuff//cannot be annoyed, can be set dead
 {
 public: // barrel image, (x,y) location specified, facing right, start out invisible(frackman must walk close to become visible), depth 2, size 1
+	oil(int x, int y) : stuff(IID_BARREL, x, y)
+	{
+	}
 	/*
 	doSomething()
 	{
-		if (dead)
+		if (dead())
 			return;
 		else if (currently invisible && frackman <= a radius of 4 units away)
 			setVisible(true)
@@ -324,11 +359,13 @@ public: //rock image, (x,y) location specified by studentworld, start out in a s
 	*/
 };
 
-class gold //can be set dead but not annoyed
+class gold : public stuff //can be set dead but not annoyed
 {
 public:  //gold image, location specified, facing right, may start visible or invisible(only starts visible if dropped by frackman), may be pickuppable by frackman or protesters
 		 //but not both (in the field-frackman, dropped by frackman-protesters), must start as permanent or temporary, depth 2, size 1
-	/*
+	gold(int x, int y) : stuff(IID_GOLD, x, y)
+	{}
+		 /*
 	doSomething()
 	{
 		if (dead)
@@ -352,11 +389,13 @@ public:  //gold image, location specified, facing right, may start visible or in
 	*/
 };
 
-class sonar //cannot be annoyed
+class sonar : public stuff//cannot be annoyed
 {
 public: // sonar image, location specified, facing right, setVisible(true), only frackman can pick up, always start in a temporary state 
 	    //for T = max(100, 300 – 10*current_level_number) ticks, depth 2, size 1
-	/*
+	sonar(int x, int y) : stuff(IID_SONAR, x, y)
+	{}
+		/*
 	doSomething()
 	{
 		if (dead)
@@ -371,11 +410,12 @@ public: // sonar image, location specified, facing right, setVisible(true), only
 	*/
 };
 
-class water //cannot be annoyed
+class water : public stuff //cannot be annoyed
 {
 public: // water pool image, location specified, facing right, setVisible(true), only frackman can pick up, always start in a temporary state 
 	    //for T = max(100, 300 – 10*current_level_number) ticks, depth 2, size 1
-		
+	water(int x, int y) : stuff(IID_WATER_POOL, x, y)
+	{}
 		/*
 		doSomething()
 		{
