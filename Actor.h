@@ -44,7 +44,7 @@ public:
 
 class FrackMan : public Actor  //one of frackmans base classes must have a pointer to studentworld via getWorld()(a f() from the base class that returns the pointer)
 {
-public:
+public:   //can get annoyed and set dead
 	FrackMan() : Actor(0, 30, 60, right, 10) //5 water, 1 sonar, 0 gold
 	{
 		setVisible(true);
@@ -105,22 +105,45 @@ public:
 	}
 };
 
-class thing : public Actor
+class squirt //can be set dead but not annoyed
 {
-public:
-
+public: //squirt image, (x,y) location specified by frackman, travel distance of 4 squares, depth 1, size 1.0, setVisible(true)
+	/*
+	doSomething()
+	{
+		if (squirt is within a radius of 3 (up to and including 3) of one or more protesters
+			annoy protesters by two points then set dead (i think annoy() already does this) so it can be removed at the end of the tick
+			if (squirt traveled its full distance)
+				set dead
+			else //squirt has not yet traveled its full distance
+				if (one square further in its current direction is occupied by a dirt or a rock)
+					set dead
+		else
+			squirt moves one square forward in its current direction
+			return;
+	}
+	*/
 };
 
-class squirt
+class oil //cannot be annoyed, can be set dead
 {
-public:
-
-};
-
-class oil
-{
-public:
-
+public: // barrel image, (x,y) location specified, facing right, start out invisible(frackman must walk close to become visible), depth 2, size 1
+	/*
+	doSomething()
+	{
+		if (dead)
+			return;
+		else if (currently invisible && frackman <= a radius of 4 units away)
+			setVisible(true)
+			return;
+		else if ( frackman is <= a radius of 3 units away)
+			set dead
+			play found oil sound
+			increase player score by 1000
+			if necessary, inform studentworld that it has been picked up //once all barrels are picked up, the player moves on to the next level
+	}
+	///will not block squirts(squirts pass over them)
+	*/
 };
 
 class rock//can be set dead but not annoyed
@@ -146,16 +169,51 @@ public: //rock image, (x,y) location specified by studentworld, start out in a s
 	*/
 };
 
-class gold 
+class gold //can be set dead but not annoyed
 {
-public:
-
+public:  //gold image, location specified, facing right, may start visible or invisible(only starts visible if dropped by frackman), may be pickuppable by frackman or protesters
+		 //but not both (in the field-frackman, dropped by frackman-protesters), must start as permanent or temporary, depth 2, size 1
+	/*
+	doSomething()
+	{
+		if (dead)
+			return;
+		else if (currently invisible && frackman <= a radius of 4 units away)
+			setVisible(true)
+			return;
+		else if (gold can be picked up by frackman && frackman is <= a radius of 3 units away)
+			set dead
+			play got goodie sound
+			increase player score by 10 (done by either frackman or gold class)
+			tell frackman that he got a gold nugget
+		else if (gold can be picked up by protesters && a protester is <= a radius of 3 units away) ////only one protester can be bribed per gold!!!
+			set dead
+			play protester found gold sound
+			increase player score by 25 (done by either protester or gold class)
+			tell protester that he got a gold nugget (for bribery)
+		if (gold is in a temporary state)
+			if (lifetime has elapsed)
+				set dead;
+	*/
 };
 
-class sonar
+class sonar //cannot be annoyed
 {
-public:
-
+public: // sonar image, location specified, facing right, setVisible(true), only frackman can pick up, always start in a temporary state 
+	    //for T = max(100, 300 – 10*current_level_number) ticks, depth 2, size 1
+	/*
+	doSomething()
+	{
+		if (dead)
+			return;
+		if (lifetime has elapsed)
+			set dead;
+		else if ( frackman is <= a radius of 3 units away)
+			set dead
+			play got goodie sound
+			increase player score by 75 (by frackman or sonar class)
+	}
+	*/
 };
 
 class water
