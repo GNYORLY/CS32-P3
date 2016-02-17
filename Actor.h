@@ -29,22 +29,171 @@ private:
 	int m_health;
 };
 
-class Protester : public Actor
+class Protester : public Actor //can be annoyed, set dead, and pick up gold
 {
-public:
-	Protester() : Actor(0, 30, 60, right, 100)
-	{}
+public: //protestor image, face left, decide how many squares numSquaresToMoveInCurrentDirection. it will decide to move left before possibly switching its direction.
+	    //This value must be : 8 <= numSquaresToMoveInCurrentDirection <= 60, 5 health, not in a leave-oil-field state, depth 0, size 1, setVisible(true)
+	//int ticksToWaitBetweenMoves = max(0, 3 – current_level_number / 4) ////every "tick" for a protester is several actual ticks according to this formula
+	/*
+		doSomething()
+		{
+			if (dead)
+				return;
+			if (in a rest state)
+				update resting tick count
+				return;
+			else if (in a leave-the-field state) 
+				if (reg protester is at (60,60))
+					set dead
+				else
+					move one square closer to the exit (60,60) using a queue based maze algorithm (cannot move through dirt and rocks(within 3 units))
+					////hint: find a way to make a single data structure that can find the optimal path no matter where the protester is
+					return;
+			else if (within 4 units of frackman && facing frackmans direction && protester hasn't shouted within its last non-resting 15 ticks)
+				play protester yell sound
+				tell frackman that he was annoyed (-2 health)
+				update some variable that prevents protester from shouting again for 15 non-resting ticks
+				return;
+			else if (there is a straight line toward frackman && frackman is > 4 units away && there is no dirt or rocks blocking the straight path)
+				change direction toward frackman 
+				take one step in that direction
+				set numSquaresToMoveInCurrentDirection value to zero
+				return;
+			else if (numSquaresToMoveInCurrentDirection <= 0)
+				pick a random direction to move
+				if (space in front of that direction is blocked by dirt or rocks)
+					select a different direction and check again until one works
+				change into this direction
+				pick a new value for numSquaresToMoveInCurrentDirection (8 <= numSquaresToMoveInCurrentDirection <= 60) to move over the same number of ticks
+				continue with step 8****
+			else if (at an intersection where it can turn 90deg and move at least one square without being blocked by dirt or rocks && hasn't turned 90deg in the last 200 non-resting ticks)
+				determine which two perpendicular directions are viable(not blocked)
+				pick a viable direction (if both are, pick one randomly)
+				set direction to the chosen one 
+				Pick a new value for numSquaresToMoveInCurrentDirection
+				make sure it doesn’t make another perpendicular turn for at least 200 more non-resting ticks
+				continue with step 8****
+			8.take one step in the current direction
+			if it cannot take a step(blocked)
+				set numSquaresToMoveInCurrentDirection to 0 (do nothing during the current tick)
+		}
+
+		annoy()
+		{
+			if (in a leave-the-field state)
+				cannot be annoyed
+			if (annoyed)
+				-2 health on protester
+				if (still not completely annoyed)
+					play protester annoyed sound
+					stun protester to a resting state for N = max(50, 100 – current_level_number * 10) resting ticks
+				else //(completely annoyed)
+					transition into a leave-the-field state
+					play protester give up sound
+					set resting tick count to 0
+					if (the annoyance was due to a rock)
+						increase player score by 500
+					else if (annoyance was due to squirt)
+						increase player score by 100
+		}
+
+		goldGet() ////gold will notify the protester when it is picked up
+		{
+			play protester found gold sound
+			increase player score by 25 
+			transition into a leave-the-field state
+		}
+	*/
 };
 
-class HardcoreProtester : public Protester
+class HardcoreProtester : public Protester //can be annoyed, set dead, and pick up gold
 {
-public:
-
+public: //hardcore protestor image, face left, decide how many squares numSquaresToMoveInCurrentDirection. it will decide to move left before possibly switching its direction.
+	    //This value must be : 8 <= numSquaresToMoveInCurrentDirection <= 60, 20 health, not in a leave-oil-field state, depth 0, size 1, setVisible(true)
+	    //int ticksToWaitBetweenMoves = max(0, 3 – current_level_number / 4) ////every "tick" for a protester is several actual ticks according to this formula
+		//the protester must rest for this many ticks between actions
+	/*doSomething()
+	{
+		if (dead)
+			return;
+		if (in a rest state)
+			update resting tick count
+			return;
+		else if (in a leave - the - field state)
+			if (reg protester is at(60, 60))
+				set dead
+			else
+				move one square closer to the exit(60, 60) using a queue based maze algorithm(cannot move through dirt and rocks(within 3 units))
+				////hint: find a way to make a single data structure that can find the optimal path no matter where the protester is
+				return;
+		else if (within 4 units of frackman && facing frackmans direction && protester hasn't shouted within its last non-resting 15 ticks)
+			play protester yell sound
+			tell frackman that he was annoyed(-2 health)
+			update some variable that prevents protester from shouting again for 15 non - resting ticks
+			return;
+		else if (frackman is > 4 units away)
+			Compute a value M, such that M = 16 + current_level_number * 2
+			if ( <= M legal vertical or horizontal moves away from frackman using the queue based algorithm)
+				determine which direction to take that goes on the path one step closer to frackman
+				change direction to the chosen one
+				take one step in that direction
+				return;
+		else if (there is a straight line toward frackman && frackman is > 4 units away && there is no dirt or rocks blocking the straight path)
+			change direction toward frackman
+			take one step in that direction
+			set numSquaresToMoveInCurrentDirection value to zero
+			return;
+		else if (numSquaresToMoveInCurrentDirection <= 0)
+			pick a random direction to move
+			if (space in front of that direction is blocked by dirt or rocks)
+				select a different direction and check again until one works
+				change into this direction
+				pick a new value for numSquaresToMoveInCurrentDirection(8 <= numSquaresToMoveInCurrentDirection <= 60) to move over the same number of ticks
+				continue with step 8 * ***
+			else if (at an intersection where it can turn 90deg and move at least one square without being blocked by dirt or rocks && hasn't turned 90deg in the last 200 non-resting ticks)
+				determine which two perpendicular directions are viable(not blocked)
+				pick a viable direction(if both are, pick one randomly)
+				set direction to the chosen one
+				Pick a new value for numSquaresToMoveInCurrentDirection
+				make sure it doesn’t make another perpendicular turn for at least 200 more non - resting ticks
+				continue with step 8 * ***
+			8.take one step in the current direction
+				if it cannot take a step(blocked)
+					set numSquaresToMoveInCurrentDirection to 0 (do nothing during the current tick)
+	}
+	
+	annoy()
+	{
+	if (in a leave-the-field state)
+		cannot be annoyed
+	if (annoyed)
+		-2 health on protester
+	if (still not completely annoyed)
+		play protester annoyed sound
+		stun protester to a resting state for N = max(50, 100 – current_level_number * 10) resting ticks
+	else //(completely annoyed)
+		transition into a leave-the-field state
+		play protester give up sound
+		set resting tick count to 0
+		if (the annoyance was due to a rock)
+			increase player score by 500
+		else if (annoyance was due to squirt)
+			increase player score by 250
+	}
+	
+	goldGet() ////gold will notify the protester when it is picked up
+	{
+		play protester found gold sound
+		increase player score by 50
+		put into resting state for ticks_to_stare = max(50, 100 – current_level_number * 10)
+		after done staring, continue with the normal algorithm
+	}
+	*/
 };
 
 class FrackMan : public Actor  //one of frackmans base classes must have a pointer to studentworld via getWorld()(a f() from the base class that returns the pointer)
 {
-public:   //can get annoyed and set dead
+public:   //can be annoyed, set dead, and pick up gold
 	FrackMan() : Actor(0, 30, 60, right, 10) //5 water, 1 sonar, 0 gold
 	{
 		setVisible(true);
@@ -216,17 +365,31 @@ public: // sonar image, location specified, facing right, setVisible(true), only
 	*/
 };
 
-class water
+class water //cannot be annoyed
 {
-public:
-
+public: // water pool image, location specified, facing right, setVisible(true), only frackman can pick up, always start in a temporary state 
+	    //for T = max(100, 300 – 10*current_level_number) ticks, depth 2, size 1
+		
+		/*
+		doSomething()
+		{
+			if (dead)
+				return;
+			if (lifetime has elapsed)
+				set dead;
+			else if ( frackman is <= a radius of 3 units away)
+				set dead
+				play got goodie sound
+				tell frackman to increase water inventory by 5
+				increase player score by 100 (by frackman or water class)
+		}
+		*/
 };
 
 class dirt //cannot be annoyed , no mention of dead
 {
 public: // image, (x,y) location passed by student world during construction of the whole field, facing right, depth 3, size .25(1x1), setVisible(true) ///size 1.0 is (4x4)
 	//just sits in place really / doSomething() would do nothing
-	//cannot be annoyed (not part of ppl class)
 };
 
 #endif // ACTOR_H_
