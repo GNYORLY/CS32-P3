@@ -130,8 +130,7 @@ public:
 				int y = 0;
 				checkValid(x, y);
 				m_vec.push_back(new gold(x, y));
-				//if (m_dirt[y + 3][x] == nullptr || m_dirt[y + 3][x + 3] == nullptr)
-					//delete m_dirt[5][5];
+
 			}
 			break;
 		case 'L':
@@ -159,7 +158,9 @@ public:
 			int y = b;
 			if (radius(a, b, 6.0))
 				continue;
-			if (m_dirt[y + 3][x] == nullptr || m_dirt[y + 3][x + 3] == nullptr)
+			if (x + 3 >= 30 && x + 3 <= 33 && y > 0)
+				continue;
+			else if (x >= 30 && x <= 33 && y > 0)
 				continue;
 			else
 				return;
