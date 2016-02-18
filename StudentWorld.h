@@ -3,10 +3,15 @@
 
 #include "GameWorld.h"
 #include "GameConstants.h"
-#include "Actor.h"
 #include <string>
 #include <vector>
+#include <algorithm>
+#include "Actor.h"
 using namespace std;
+
+class Actor;
+class FrackMan;
+class dirt;
 
 class StudentWorld : public GameWorld
 {
@@ -18,13 +23,28 @@ public:
 
 	virtual int init()
 	{
-		//fill field with dirt appropriately
-		//put int B = min(current_level_number / 2 + 2, 6) boulders
-		//int G = max(5-current_level_number / 2, 2) gold (start out pickuppable by frackman in a permanent state but invisible)
-		//and int L = min(2 + current_level_number, 20) oil into the field (invisible)
-		//no object can be within a radius of 6 from each other
-		//all objects must be completely overlapped with dirt (its actually behind them but they're invisible)
-		//rocks cannot overlap any dirt
+		for (int r = 0; r != 60; r++)
+			for (int c = 0; c != 60; c++)
+			{
+				if (c >= 30 && c <= 33 && r >= 4)
+					continue;
+				else
+					m_dirt[r][c] = new dirt(c, r);
+			}
+		
+		int B = min(signed((getLevel() / 2) + 2), 6);
+		for (int i = 0; i != B; i++)
+			m_vec.push_back(new rock(1, 2));
+													//put int B = min(current_level_number / 2 + 2, 6) boulders
+		int G = max(signed (5 - (getLevel() / 2)), 2);
+		for (int i = 0; i != G; i++)			//gold (start out pickuppable by frackman in a permanent state but invisible)
+			m_vec.push_back(new gold(1, 2));
+
+		int L = min(signed (2 + getLevel()), 20); //oil into the field (invisible)
+		for (int i = 0; i != L; i++)
+			m_vec.push_back(new oil(1, 2));						//no object can be within a radius of 6 from each other
+												//all objects must be completely overlapped with dirt (its actually behind them but they're invisible)
+													//rocks cannot overlap any dirt
 		return GWSTATUS_CONTINUE_GAME;
 	}
 
@@ -68,22 +88,42 @@ public:
 		// the player hasn’t completed the current level and hasn’t died
 		// let them continue playing the current level
 		*/
-		return GWSTATUS_PLAYER_DIED;
+		return GWSTATUS_CONTINUE_GAME;
 	}
 
 	virtual void cleanUp()
 	{
 	}
 
+	GameWorld* getGetWorld()
+	{
+		return m_gw;
+	}
+
 	void updateDisplayText()
 	{
 		m_gw->setGameStatText("hello");
 	}
+
+	void insert(int a)
+	{
+		int B = min(signed ((getLevel() / 2) + 2), 6);
+		for (int i = 0; i != B; i++)
+			m_vec.push_back(new oil(1,2));
+	}
+
+	void removeOil()
+	{
+		m_oil--;
+		if (m_oil <= 0)
+			advanceToNextLevel();
+	}
 private:
-	std::vector<Actor> m_vec;
+	std::vector<Actor*> m_vec;
 	FrackMan* m_frck;
 	dirt* m_dirt[60][60];
 	GameWorld* m_gw;
+	int m_oil;
 };
 
 #endif // STUDENTWORLD_H_
