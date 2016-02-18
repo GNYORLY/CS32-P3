@@ -32,33 +32,9 @@ public:
 				else
 					m_dirt[r][c] = new dirt(c, r);
 			}
-		
-		int B = min(signed((getLevel() / 2) + 2), 6);
-		for (int i = 0; i != B; i++)
-		{ 
-			int x = 0;
-			int y = 0;
-			checkDirt(x, y);
-			m_vec.push_back(new rock(x, y));
-		}
-															//put int B = min(current_level_number / 2 + 2, 6) boulders
-		int G = max(signed (5 - (getLevel() / 2)), 2);
-		for (int i = 0; i != G; i++)
-		{
-			int x = 0;
-			int y = 0;
-			checkDirt(x, y);
-			m_vec.push_back(new gold(x, y));
-		}												//gold (start out pickuppable by frackman in a permanent state but invisible)
-
-		int L = min(signed (2 + getLevel()), 20);		 //oil into the field (invisible)
-		for (int i = 0; i != L; i++)
-		{
-			int x = 0;
-			int y = 0;
-			checkDirt(x, y);
-			m_vec.push_back(new oil(x, y));
-		}
+		insert('B');
+		insert('G');
+		insert('L');
 														//no object can be within a radius of 6 from each other
 												                                            //all objects must be completely overlapped with dirt (its actually behind them but they're invisible)
 													                                        //rocks cannot overlap any dirt
@@ -122,6 +98,44 @@ public:
 		m_gw->setGameStatText("hello");
 	}
 
+	void insert(char goody)
+	{
+		int objects;
+		switch (goody)
+		{
+		case 'B':
+			objects = min(signed((getLevel() / 2) + 2), 6);
+			for (int i = 0; i != objects; i++)
+			{
+				int x = 0;
+				int y = 0;
+				checkDirt(x, y);
+				m_vec.push_back(new rock(x, y));
+			}
+			break;
+		case 'G':
+			objects = max(signed(5 - (getLevel() / 2)), 2);
+			for (int i = 0; i != objects; i++)
+			{
+				int x = 0;
+				int y = 0;
+				checkDirt(x, y);
+				m_vec.push_back(new gold(x, y));
+			}
+			break;
+		case 'L':
+			objects = min(signed(2 + getLevel()), 20);
+			for (int i = 0; i != objects; i++)
+			{
+				int x = 0;
+				int y = 0;
+				checkDirt(x, y);
+				m_vec.push_back(new oil(x, y));
+			}
+			break;
+		}
+	}
+
 	void checkDirt(int& a, int& b)
 	{
 			do
@@ -140,8 +154,6 @@ public:
 	void removeOil()
 	{
 		m_oil--;
-		if (m_oil <= 0)
-			advanceToNextLevel();
 	}
 private:
 	std::vector<Actor*> m_vec;
