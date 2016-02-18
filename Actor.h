@@ -8,10 +8,10 @@ class StudentWorld;
 class Actor : public GraphObject
 {
 public:
-	Actor(int image, int startx, int starty, Direction facing, float size, int depth) : GraphObject(image, startx, starty, facing, size, depth)
+	Actor(StudentWorld* sw, int image, int startx, int starty, Direction facing, float size, int depth) : GraphObject(image, startx, starty, facing, size, depth)
 	{
-		m_x = startx;
-		m_y = starty;
+		setVisible(true);
+		m_sw = sw;
 	}
 
 	virtual void doSomething()
@@ -22,42 +22,31 @@ public:
 		m_dead = true;
 	}
 
+	//accessors
 	bool isDead() const
 	{
 		return m_dead;
 	}
 
-	StudentWorld* getWorld()
+	StudentWorld* getWorld() const
 	{
 		return m_sw;
-	}
-
-	int posX() const
-	{
-		return m_x;
-	}
-
-	int posY() const
-	{
-		return m_y;
 	}
 
 private:
 	bool m_dead = false;
 	StudentWorld* m_sw;
-	int m_x;
-	int m_y;
 };
 
 class ppl : public Actor
 {
 public:
-	ppl(int image, int x, int y, Direction dir, int health) : Actor(image, x, y, dir, 1.0, 0)
+	ppl(StudentWorld* sw, int image, int x, int y, Direction dir, int health) : Actor(sw, image, x, y, dir, 1.0, 0)
 	{
 		setVisible(true);
 		m_health = health;
 	}
-	virtual void getAnnoyed() 
+	virtual void getAnnoyed()  //eh
 	{ 
 		m_health -= 2;
 		if (m_health <= 0)
@@ -73,10 +62,45 @@ private:
 	int m_health;
 };
 
+class FrackMan : public ppl  
+{
+public:		
+	FrackMan(StudentWorld* sw) : ppl(sw, IID_PLAYER, 30, 60, right, 10)
+	{ setVisible(true); }
+
+	~FrackMan() {}
+
+	void doSomething();
+
+	//accessors
+	int water() { return m_water; }
+	int gold() { return m_gold; }
+	int sonar() { return m_sonar; }
+	
+private:
+	int m_water = 5;
+	int m_gold = 0;
+	int m_sonar = 1;
+};
+
+class dirt : public Actor 
+{
+public: 
+	dirt(StudentWorld* sw, int x, int y) : Actor(sw, IID_DIRT, x, y, right, .25, 3)
+	{ setVisible(true); }
+	
+	~dirt()
+	{ setVisible(false); }
+};
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////UNDER CONSTRUCTION/////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
 class stuff : public Actor
 {
 public:
-	stuff(int image, int x, int y, Direction dir = right, float size = 1.0, int depth = 2) : Actor(image, x, y, dir, size, depth)
+	stuff(StudentWorld* sw, int image, int x, int y, Direction dir = right, float size = 1.0, int depth = 2) : Actor(sw, image, x, y, dir, size, depth)
 	{}
 
 };
@@ -243,83 +267,6 @@ public: //hardcore protestor image, face left, decide how many squares numSquare
 	*/
 };
 
-class FrackMan : public ppl  //one of frackmans base classes must have a pointer to studentworld via getWorld()(a f() from the base class that returns the pointer)
-{
-public:   //can be annoyed, set dead, and pick up gold
-	FrackMan() : ppl(IID_PLAYER, 30, 60, right, 10) //5 water, 1 sonar, 0 gold
-	{}
-	void doSomething()
-	{
-		if (isDead())
-			return;
-		/*
-		if (frackman overlaps dirt)
-			call studentworld to:
-			Remove/destroy the Dirt objects from the 4x4 area occupied by the FrackMan (from x, y to x+3,y+3 inclusive)
-			Make a digging sound by playing the SOUND_DIG sound (see the StudentWorld section of this document for details on how to play a sound).
-		else
-			check if a key was pressed:
-				char ch;
-				if (getWorld()->getKey(ch) == true)
-				{
-				// user hit a key this tick!
-				switch (ch)
-				{
-				case KEY_PRESS_LEFT:
-				... move player to the left ...;
-				break;
-				case KEY_PRESS_RIGHT:
-				... move player to the left ...;
-				break;
-				case KEY_PRESS_SPACE:
-				... add a Squirt in front of the player...;
-				break;
-				// etc…
-			if (escape was pressed)
-				set frackman to completely annoyed(dead)--studentworld should respond accordingly to the dead frackman(replay lvl or end game when no lives left)
-			if (spacebar was pressed)
-				if (there is dirt at the squirt location(4 squares in front of frackman) or if the squirt is within a radius of 3.0 of a rock)
-					do not fire a squirt
-				else
-					fire a squirt (create a squirt object 4 squares in front of frackman)
-				reduce squirt count by one
-				play sound player squirt
-		////////both make sound and reduce squirt count, but only one actually squirts//////
-		hint:have frackman create squirt then have studentworld manage the rest
-			if (direction other than current direction)
-				turn frackman to that direction, but do not move
-			if (same direction && frackman is able to move in that direction(no rocks in the way and not out of the game area))
-				use graphObject's moveTo() to move 1 square in that direction
-				////////////valid positions are from 0-60 inclusive for both x and y, frackman cannot go <= radius of 3 from center of rock////////
-			if (z or Z && frackman has at least 1 sonar)
-				use sonar to illuminate within a radius of 12 around him (includes 11.99)
-				decrease sonar count by 1
-				setVisible() all hidden game objects within a radius of 12
-			if (tab && frackman has at least 1 gold)
-				add gold object to the current x,y location
-				reduce gold count by 1
-				////////the gold nugget will start out visible but only live for 100 ticks, it can only be picked up by protesters/////////
-		*/
-		
-	}
-	int water()
-	{
-		return m_water;
-	}
-	int gold()
-	{
-		return m_gold;
-	}
-	int sonar()
-	{
-		return m_sonar;
-	}
-private:
-	int m_water = 5;
-	int m_gold = 0;
-	int m_sonar = 1;
-};
-
 class squirt //can be set dead but not annoyed
 {
 public: //squirt image, (x,y) location specified by frackman, travel distance of 4 squares, depth 1, size 1.0, setVisible(true)
@@ -343,11 +290,9 @@ public: //squirt image, (x,y) location specified by frackman, travel distance of
 class oil : public stuff//cannot be annoyed, can be set dead
 {
 public: // barrel image, (x,y) location specified, facing right, start out invisible(frackman must walk close to become visible), depth 2, size 1
-	oil(int x, int y) : stuff(IID_BARREL, x, y)
-	{
-		setVisible(true); //remove
-	}
-
+	oil(StudentWorld* sw, int x, int y) : stuff(sw, IID_BARREL, x, y)
+	{}
+/*
 	virtual void doSomething()
 	{
 		if (isDead())
@@ -360,18 +305,18 @@ public: // barrel image, (x,y) location specified, facing right, start out invis
 		else if (isDead())//frackman is <= a radius of 3 units away)
 		{ 
 			setDead();
-			//getWorld()->getGetWorld()->playSound(SOUND_FOUND_OIL); //play found oil sound
-			//getWorld()->getGetWorld()->increaseScore(1000);//increase player score by 1000
+			//getWorld()->playSound(SOUND_FOUND_OIL); //play found oil sound
+			//getWorld()->increaseScore(1000);//increase player score by 1000
 			//getWorld()->removeOil();//if necessary, inform studentworld that it has been picked up //once all barrels are picked up, the player moves on to the next level
 		}
 	}
-	//will not block squirts(squirts pass over them)
+	*///will not block squirts(squirts pass over them)
 };
 
 class rock : public stuff//can be set dead but not annoyed
 {
 public: //rock image, (x,y) location specified by studentworld, start out in a stable state, face down, depth 1, size 1.0, setVisible(true)
-	rock(int x, int y) : stuff(IID_BOULDER, x, y, down, 1.0, 1)
+	rock(StudentWorld* sw, int x, int y) : stuff(sw, IID_BOULDER, x, y, down, 1.0, 1)
 	{
 		setVisible(true);
 	}
@@ -399,9 +344,9 @@ class gold : public stuff //can be set dead but not annoyed
 {
 public:  //gold image, location specified, facing right, may start visible or invisible(only starts visible if dropped by frackman), may be pickuppable by frackman or protesters
 		 //but not both (in the field-frackman, dropped by frackman-protesters), must start as permanent or temporary, depth 2, size 1
-	gold(int x, int y) : stuff(IID_GOLD, x, y)
+	gold(StudentWorld* sw, int x, int y) : stuff(sw, IID_GOLD, x, y)
 	{
-		setVisible(true); //remove
+	 
 	}
 		 /*
 	doSomething()
@@ -431,7 +376,7 @@ class sonar : public stuff//cannot be annoyed
 {
 public: // sonar image, location specified, facing right, setVisible(true), only frackman can pick up, always start in a temporary state 
 	    //for T = max(100, 300 – 10*current_level_number) ticks, depth 2, size 1
-	sonar(int x, int y) : stuff(IID_SONAR, x, y)
+	sonar(StudentWorld* sw, int x, int y) : stuff(sw, IID_SONAR, x, y)
 	{}
 		/*
 	doSomething()
@@ -452,7 +397,7 @@ class water : public stuff //cannot be annoyed
 {
 public: // water pool image, location specified, facing right, setVisible(true), only frackman can pick up, always start in a temporary state 
 	    //for T = max(100, 300 – 10*current_level_number) ticks, depth 2, size 1
-	water(int x, int y) : stuff(IID_WATER_POOL, x, y)
+	water(StudentWorld* sw, int x, int y) : stuff(sw, IID_WATER_POOL, x, y)
 	{}
 		/*
 		doSomething()
@@ -468,16 +413,6 @@ public: // water pool image, location specified, facing right, setVisible(true),
 				increase player score by 100 (by frackman or water class)
 		}
 		*/
-};
-
-class dirt : public Actor //cannot be annoyed , no mention of dead
-{
-public: // image, (x,y) location passed by student world during construction of the whole field, facing right, depth 3, size .25(1x1), setVisible(true) ///size 1.0 is (4x4)
-	//just sits in place really / doSomething() would do nothing
-	dirt(int x, int y) : Actor(IID_DIRT, x, y, right, .25, 3)
-	{
-		setVisible(true);
-	}
 };
 
 #endif // ACTOR_H_
