@@ -7,6 +7,7 @@
 #include <vector>
 #include <algorithm>
 #include <cstdlib>
+#include <cmath>
 #include "Actor.h"
 using namespace std;
 
@@ -109,8 +110,16 @@ public:
 			{
 				int x = 0;
 				int y = 0;
-				checkDirt(x, y);
+				checkValid(x, y);
 				m_vec.push_back(new rock(x, y));
+				int a = x;
+				for (int i = 0; i < 4; i++, a++)
+				{
+					int b = y;
+					for (int j = 0; j < 4; j++, b++)
+						delete m_dirt[b][a]; 
+				}
+							
 			}
 			break;
 		case 'G':
@@ -119,8 +128,10 @@ public:
 			{
 				int x = 0;
 				int y = 0;
-				checkDirt(x, y);
+				checkValid(x, y);
 				m_vec.push_back(new gold(x, y));
+				//if (m_dirt[y + 3][x] == nullptr || m_dirt[y + 3][x + 3] == nullptr)
+					//delete m_dirt[5][5];
 			}
 			break;
 		case 'L':
@@ -129,21 +140,30 @@ public:
 			{
 				int x = 0;
 				int y = 0;
-				checkDirt(x, y);
+				checkValid(x, y);
 				m_vec.push_back(new oil(x, y));
 			}
 			break;
 		}
 	}
 
-	void checkDirt(int& a, int& b)
-	{
-			do
-			{
-				a = random(0, 60);
-				b = random(20, 56);
-			} while (m_dirt[b][a] == nullptr || m_dirt[b - 3][a + 3] == nullptr);
-			
+	void checkValid(int& a, int& b) //in dirt and outside radius 6 of another object
+	{		
+		
+		while (true)
+		{
+			int i = 0;
+			a = random(0, 60);
+			b = random(20, 56);
+			int x = a;
+			int y = b;
+			if (radius(a, b, 6.0))
+				continue;
+			if (m_dirt[y + 3][x] == nullptr || m_dirt[y + 3][x + 3] == nullptr)
+				continue;
+			else
+				return;
+		}
 	}
 
 	int random(int min, int max)
@@ -151,12 +171,28 @@ public:
 		return (rand() % (((max-min)+1) + min));
 	}
 
+	double distance(int a, int b)
+	{
+		return sqrt((a*a) + (b*b));
+	}
+	
+	bool radius(int a, int b, double rad)
+	{
+		for (p = m_vec.begin(); p != m_vec.end(); p++)
+		{
+			if (distance(a - (*p)->posX(), b - (*p)->posY()) <= rad)       ////checks if there's something within rad distance inclusive
+				return true;
+		}
+		return false;
+	}
+
 	void removeOil()
 	{
 		m_oil--;
 	}
 private:
-	std::vector<Actor*> m_vec;
+	vector<Actor*> m_vec;
+	vector<Actor*>::iterator p;
 	FrackMan* m_frck;
 	dirt* m_dirt[60][64];
 	GameWorld* m_gw;
