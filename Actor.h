@@ -3,11 +3,15 @@
 
 #include "GraphObject.h"
 
+class StudentWorld;
+
 class Actor : public GraphObject
 {
 public:
-	Actor(int image, int startx, int starty, Direction facing, float size, int depth) : GraphObject(image, startx, starty, facing, size = 1.0, depth = 0)
+	Actor(int image, int startx, int starty, Direction facing, float size, int depth) : GraphObject(image, startx, starty, facing, size, depth)
 	{
+		m_x = startx;
+		m_y = starty;
 	}
 
 	virtual void doSomething()
@@ -22,10 +26,27 @@ public:
 	{
 		return m_dead;
 	}
-	
+
+	StudentWorld* getWorld()
+	{
+		return m_sw;
+	}
+
+	int posX() const
+	{
+		return m_x;
+	}
+
+	int posY() const
+	{
+		return m_y;
+	}
+
 private:
-	bool m_dead;
-	//StudentWorld* m_sw;
+	bool m_dead = false;
+	StudentWorld* m_sw;
+	int m_x;
+	int m_y;
 };
 
 class ppl : public Actor
@@ -57,6 +78,7 @@ class stuff : public Actor
 public:
 	stuff(int image, int x, int y, Direction dir = right, float size = 1.0, int depth = 2) : Actor(image, x, y, dir, size, depth)
 	{}
+
 };
 
 class Protester : public Actor //can be annoyed, set dead, and pick up gold
@@ -278,18 +300,24 @@ public:   //can be annoyed, set dead, and pick up gold
 				reduce gold count by 1
 				////////the gold nugget will start out visible but only live for 100 ticks, it can only be picked up by protesters/////////
 		*/
-	
 		
 	}
-	void getWorld()
-		{
-			//return a pointer to StudentWorld from a base class
-		}
+	int water()
+	{
+		return m_water;
+	}
+	int gold()
+	{
+		return m_gold;
+	}
+	int sonar()
+	{
+		return m_sonar;
+	}
 private:
 	int m_water = 5;
 	int m_gold = 0;
 	int m_sonar = 1;
-	//int m_oil = 0;
 };
 
 class squirt //can be set dead but not annoyed
@@ -317,28 +345,36 @@ class oil : public stuff//cannot be annoyed, can be set dead
 public: // barrel image, (x,y) location specified, facing right, start out invisible(frackman must walk close to become visible), depth 2, size 1
 	oil(int x, int y) : stuff(IID_BARREL, x, y)
 	{
+		setVisible(true); //remove
 	}
-	/*
-	doSomething()
+
+	virtual void doSomething()
 	{
-		if (dead())
+		if (isDead())
 			return;
-		else if (currently invisible && frackman <= a radius of 4 units away)
-			setVisible(true)
+		else if (!isVisible()) //&& FrackMan <= a radius of 4 units away) cant use isVisible()
+		{
+			setVisible(true);
 			return;
-		else if ( frackman is <= a radius of 3 units away)
-			set dead
-			play found oil sound
-			increase player score by 1000
-			if necessary, inform studentworld that it has been picked up //once all barrels are picked up, the player moves on to the next level
+		}
+		else if (isDead())//frackman is <= a radius of 3 units away)
+		{ 
+			setDead();
+			//getWorld()->getGetWorld()->playSound(SOUND_FOUND_OIL); //play found oil sound
+			//getWorld()->getGetWorld()->increaseScore(1000);//increase player score by 1000
+			//getWorld()->removeOil();//if necessary, inform studentworld that it has been picked up //once all barrels are picked up, the player moves on to the next level
+		}
 	}
-	///will not block squirts(squirts pass over them)
-	*/
+	//will not block squirts(squirts pass over them)
 };
 
-class rock//can be set dead but not annoyed
+class rock : public stuff//can be set dead but not annoyed
 {
 public: //rock image, (x,y) location specified by studentworld, start out in a stable state, face down, depth 1, size 1.0, setVisible(true)
+	rock(int x, int y) : stuff(IID_BOULDER, x, y, down, 1.0, 1)
+	{
+		setVisible(true);
+	}
 	/*doSomething()
 	{
 		if (dead)
@@ -364,7 +400,9 @@ class gold : public stuff //can be set dead but not annoyed
 public:  //gold image, location specified, facing right, may start visible or invisible(only starts visible if dropped by frackman), may be pickuppable by frackman or protesters
 		 //but not both (in the field-frackman, dropped by frackman-protesters), must start as permanent or temporary, depth 2, size 1
 	gold(int x, int y) : stuff(IID_GOLD, x, y)
-	{}
+	{
+		setVisible(true); //remove
+	}
 		 /*
 	doSomething()
 	{
@@ -432,10 +470,14 @@ public: // water pool image, location specified, facing right, setVisible(true),
 		*/
 };
 
-class dirt //cannot be annoyed , no mention of dead
+class dirt : public Actor //cannot be annoyed , no mention of dead
 {
 public: // image, (x,y) location passed by student world during construction of the whole field, facing right, depth 3, size .25(1x1), setVisible(true) ///size 1.0 is (4x4)
 	//just sits in place really / doSomething() would do nothing
+	dirt(int x, int y) : Actor(IID_DIRT, x, y, right, .25, 3)
+	{
+		setVisible(true);
+	}
 };
 
 #endif // ACTOR_H_
