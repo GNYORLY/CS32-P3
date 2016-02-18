@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <cstdlib>
 #include "Actor.h"
 using namespace std;
 
@@ -24,7 +25,7 @@ public:
 	virtual int init()
 	{
 		for (int r = 0; r != 60; r++)
-			for (int c = 0; c != 60; c++)
+			for (int c = 0; c != 64; c++)
 			{
 				if (c >= 30 && c <= 33 && r >= 4)
 					continue;
@@ -34,17 +35,33 @@ public:
 		
 		int B = min(signed((getLevel() / 2) + 2), 6);
 		for (int i = 0; i != B; i++)
-			m_vec.push_back(new rock(1, 2));
-													//put int B = min(current_level_number / 2 + 2, 6) boulders
+		{ 
+			int x = 0;
+			int y = 0;
+			checkDirt(x, y);
+			m_vec.push_back(new rock(x, y));
+		}
+															//put int B = min(current_level_number / 2 + 2, 6) boulders
 		int G = max(signed (5 - (getLevel() / 2)), 2);
-		for (int i = 0; i != G; i++)			//gold (start out pickuppable by frackman in a permanent state but invisible)
-			m_vec.push_back(new gold(1, 2));
+		for (int i = 0; i != G; i++)
+		{
+			int x = 0;
+			int y = 0;
+			checkDirt(x, y);
+			m_vec.push_back(new gold(x, y));
+		}												//gold (start out pickuppable by frackman in a permanent state but invisible)
 
-		int L = min(signed (2 + getLevel()), 20); //oil into the field (invisible)
+		int L = min(signed (2 + getLevel()), 20);		 //oil into the field (invisible)
 		for (int i = 0; i != L; i++)
-			m_vec.push_back(new oil(1, 2));						//no object can be within a radius of 6 from each other
-												//all objects must be completely overlapped with dirt (its actually behind them but they're invisible)
-													//rocks cannot overlap any dirt
+		{
+			int x = 0;
+			int y = 0;
+			checkDirt(x, y);
+			m_vec.push_back(new oil(x, y));
+		}
+														//no object can be within a radius of 6 from each other
+												                                            //all objects must be completely overlapped with dirt (its actually behind them but they're invisible)
+													                                        //rocks cannot overlap any dirt
 		return GWSTATUS_CONTINUE_GAME;
 	}
 
@@ -105,11 +122,19 @@ public:
 		m_gw->setGameStatText("hello");
 	}
 
-	void insert(int a)
+	void checkDirt(int& a, int& b)
 	{
-		int B = min(signed ((getLevel() / 2) + 2), 6);
-		for (int i = 0; i != B; i++)
-			m_vec.push_back(new oil(1,2));
+			do
+			{
+				a = random(0, 60);
+				b = random(20, 56);
+			} while (m_dirt[b][a] == nullptr || m_dirt[b - 3][a + 3] == nullptr);
+			
+	}
+
+	int random(int min, int max)
+	{
+		return (rand() % (((max-min)+1) + min));
 	}
 
 	void removeOil()
@@ -121,7 +146,7 @@ public:
 private:
 	std::vector<Actor*> m_vec;
 	FrackMan* m_frck;
-	dirt* m_dirt[60][60];
+	dirt* m_dirt[60][64];
 	GameWorld* m_gw;
 	int m_oil;
 };
