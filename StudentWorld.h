@@ -8,6 +8,8 @@
 #include <algorithm>
 #include <cstdlib>
 #include <cmath>
+#include <iomanip>
+#include <sstream>
 #include "Actor.h"
 using namespace std;
 
@@ -29,44 +31,52 @@ public:
 			for (int c = 0; c != 64; c++)
 			{
 				if (c >= 30 && c <= 33 && r >= 4)
-					continue;
+					m_dirt[r][c] = nullptr;
 				else
 					m_dirt[r][c] = new dirt(c, r);
 			}
 		insert('B');
 		insert('G');
 		insert('L');
-														//no object can be within a radius of 6 from each other
-												                                            //all objects must be completely overlapped with dirt (its actually behind them but they're invisible)
-													                                        //rocks cannot overlap any dirt
+		m_frck = new FrackMan;
 		return GWSTATUS_CONTINUE_GAME;
 	}
 
 	virtual int move()
 	{
-		//updateDisplayText(); // update the score/lives/level text at screen top
-							 
+		setDisplayText(); // update the score/lives/level text at screen top
+
 					 // The term “Actors” refers to all Protesters, the player, Goodies,
 					 // Boulders, Barrels of oil, Holes, Squirts, the Exit, etc.
 					 // Give each Actor a chance to do something
-		/*m_vec.push_back(1);
-		std::vector<Actor>::iterator p;
+		m_frck->doSomething();
 		for (p = m_vec.begin(); p != m_vec.end(); p++)
 		{
-			cout << *p << endl;
-		}*/
-		/*	if (p->health() > 0)
+
+			if (!(*p)->isDead())
 			{
-				// ask each actor to do something (e.g. move)
-				doSomething(p);
-				if (p->health() <= 0)
+				(*p)->doSomething();
+				if (m_frck->isDead())
 					return GWSTATUS_PLAYER_DIED;
-				if (theplayerCompletedTheCurrentLevel() == true)
+				if (m_oil <= 0)
 				{
+					playSound(SOUND_PROTESTER_GIVE_UP);
 					return GWSTATUS_FINISHED_LEVEL;
 				}
 			}
+			else
+				delete *p;
 		}
+
+		/*if (m_frck->isDead())
+			//return GWSTATUS_PLAYER_DIED;
+
+		if (m_oil <= 0)
+		{
+			playSound(SOUND_PROTESTER_GIVE_UP);
+			return GWSTATUS_FINISHED_LEVEL;
+		}
+	
 			// Remove newly-dead actors after each tick
 		removeDeadGameObjects(); // delete dead game objects
 								 // return the proper result
@@ -76,7 +86,7 @@ public:
 		// return the result that the player finished the level
 		if (theplayerCompletedTheCurrentLevel() == true)
 		{
-			m_gw->playSound(SOUND_PROTESTER_GIVE_UP);
+			playSound(SOUND_PROTESTER_GIVE_UP);
 			return GWSTATUS_FINISHED_LEVEL;
 		}
 		// the player hasn’t completed the current level and hasn’t died
@@ -89,14 +99,50 @@ public:
 	{
 	}
 
+	void removeDirt()
+	{ 
+		int x = m_frck->posX();
+		int y = m_frck->posY();
+		for (int i = 0; i < 4; i++, x++)
+		{
+			int b = y;
+			for (int j = 0; j < 4; j++, b++)
+				if (m_dirt[b][x] != nullptr)
+				{
+					delete m_dirt[b][x];
+					m_dirt[b][x] = nullptr;
+				}
+		}
+	}
+
 	GameWorld* getGetWorld()
 	{
 		return m_gw;
 	}
 
-	void updateDisplayText()
+	void setDisplayText()
 	{
-		m_gw->setGameStatText("hello");
+		int score = getScore();
+		int level = getLevel();
+		int lives = getLives();
+		int health = (m_frck->health()/10)*100;
+		int squirts = m_frck->water();
+		int gold = m_frck->gold();
+		int sonar = m_frck->sonar();
+		int barrelsLeft = m_oil;
+		// Next, create a string from your statistics, of the form: // “Scr: 0321000 Lvl: 52 Lives: 3 Hlth: 80% Water: 20 Gld: 3 Sonar: 1 Oil Left: 2”
+		string s = organize(score, level, lives, health, squirts, gold, sonar, barrelsLeft);
+		// Finally, update the display text at the top of the screen with your
+		// newly created stats
+		setGameStatText(s); // calls our provided GameWorld::setGameStatText
+	}
+		
+	string organize(int sc, int lvl, int liv, int hp, int wtr, int au, int snr, int oil)
+	{ 
+		stringstream ss;
+		ss << setw(8) << setfill('0') << sc;
+		string s = ss.str();
+		return "Scr: " + s + "  Lvl : " + to_string(lvl) + "  Lives : " + to_string(liv) + "  Hlth : " + to_string(hp) + "%  Water : " + to_string(wtr) + "  Gld : " + to_string(au) + "  Sonar : " + to_string(snr) + "  Oil Left : " + to_string(oil);
 	}
 
 	void insert(char goody)
@@ -117,7 +163,10 @@ public:
 				{
 					int b = y;
 					for (int j = 0; j < 4; j++, b++)
-						delete m_dirt[b][a]; 
+					{
+						delete m_dirt[b][a];
+						m_dirt[b][a] = nullptr;
+					}
 				}
 							
 			}
@@ -142,6 +191,7 @@ public:
 				checkValid(x, y);
 				m_vec.push_back(new oil(x, y));
 			}
+			m_oil = objects;
 			break;
 		}
 	}
