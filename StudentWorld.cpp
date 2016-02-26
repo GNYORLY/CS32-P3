@@ -38,9 +38,12 @@ int StudentWorld::init()
 			else
 				m_dirt[r][c] = new dirt(this, c, r);
 		}
+	
 	insert('B');
 	insert('G');
 	insert('L');
+	m_vec.push_back(new sonar(this));
+
 	m_frck = new FrackMan(this);
 	return GWSTATUS_CONTINUE_GAME;
 }
@@ -63,34 +66,39 @@ int StudentWorld::move()
 			}
 		}
 		else
-			delete *p;
+		{
+			delete (*p);
+			m_vec.erase(p);
+			p = m_vec.begin();
+		}
 
-		/*if (m_frck->isDead())
-		//return GWSTATUS_PLAYER_DIED;
+		if (m_frck->isDead())
+			return GWSTATUS_PLAYER_DIED;
 
 		if (m_oil <= 0)
 		{
-		playSound(SOUND_PROTESTER_GIVE_UP);
-		return GWSTATUS_FINISHED_LEVEL;
+			playSound(SOUND_PROTESTER_GIVE_UP);
+			return GWSTATUS_FINISHED_LEVEL;
 		}
-
-		// Remove newly-dead actors after each tick
-		removeDeadGameObjects(); // delete dead game objects
-		// return the proper result
-		if (theplayerDiedDuringThisTick() == true)
-		return GWSTATUS_PLAYER_DIED;
-		// If the player has collected all of the Barrels on the level, then
-		// return the result that the player finished the level
-		if (theplayerCompletedTheCurrentLevel() == true)
-		{
-		playSound(SOUND_PROTESTER_GIVE_UP);
-		return GWSTATUS_FINISHED_LEVEL;
-		}
-		// the player hasn’t completed the current level and hasn’t died
-		// let them continue playing the current level
-		*/
-		return GWSTATUS_CONTINUE_GAME;
 	}
+		/*
+				// Remove newly-dead actors after each tick
+				removeDeadGameObjects(); // delete dead game objects
+				// return the proper result
+				if (theplayerDiedDuringThisTick() == true)
+				return GWSTATUS_PLAYER_DIED;
+				// If the player has collected all of the Barrels on the level, then
+				// return the result that the player finished the level
+				if (theplayerCompletedTheCurrentLevel() == true)
+				{
+				playSound(SOUND_PROTESTER_GIVE_UP);
+				return GWSTATUS_FINISHED_LEVEL;
+				}
+				// the player hasn’t completed the current level and hasn’t died
+				// let them continue playing the current level
+				*/
+		return GWSTATUS_CONTINUE_GAME;
+	
 }
 
 void StudentWorld::cleanUp()
@@ -104,6 +112,35 @@ void StudentWorld::cleanUp()
 		{
 			delete m_dirt[r][c];
 		}
+}
+
+void StudentWorld::giveWater()
+{
+	m_frck->addWater();
+}
+
+void StudentWorld::giveGold()
+{
+	m_frck->addGold();
+}
+
+void StudentWorld::giveSonar()
+{
+	m_frck->addSonar();
+}
+
+void StudentWorld::useSonar() 
+{
+	for (p = m_vec.begin(); p != m_vec.end(); p++)
+	{
+		if (frckRadius((*p)->getX(), (*p)->getY(), 12))
+			(*p)->setVisible(true);
+	}
+}
+
+void StudentWorld::placeGold()
+{
+	m_vec.push_back(new goldDrop(this, m_frck->getX(), m_frck->getY()));
 }
 
 void StudentWorld::removeDirt()
@@ -201,7 +238,6 @@ void StudentWorld::insert(char goody)
 
 void StudentWorld::checkValid(int& a, int& b)
 {
-
 	while (true)
 	{
 		int i = 0;
@@ -239,4 +275,14 @@ bool StudentWorld::radius(int a, int b, double rad)
 	}
 	return false;
 }
+
+bool StudentWorld::frckRadius(int a, int b, double rad)
+{
+	if (distance(a - m_frck->getX(), b - m_frck->getY()) <= rad)
+		return true;
+	else
+		return false;
+}
+
+
 
