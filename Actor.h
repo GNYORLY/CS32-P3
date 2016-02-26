@@ -14,24 +14,17 @@ public:
 		m_sw = sw;
 	}
 
-	virtual void doSomething()
+	~Actor() {}
+
+	virtual void doSomething() 
 	{}
 	
-	void setDead()
-	{
-		m_dead = true;
-	}
+	void setDead() { m_dead = true; }
 
 	//accessors
-	bool isDead() const
-	{
-		return m_dead;
-	}
+	bool isDead() const { return m_dead; }
 
-	StudentWorld* getWorld() const
-	{
-		return m_sw;
-	}
+	StudentWorld* getWorld() const { return m_sw; }
 
 private:
 	bool m_dead = false;
@@ -70,12 +63,17 @@ public:
 
 	~FrackMan() {}
 
+	//mutators
 	void doSomething();
 
+	void addWater() { m_water += 5; }
+	void addGold() { m_gold++; }
+	void addSonar() { m_sonar += 2; }
+
 	//accessors
-	int water() { return m_water; }
-	int gold() { return m_gold; }
-	int sonar() { return m_sonar; }
+	unsigned int water() const { return m_water; }
+	unsigned int gold() const { return m_gold; }
+	unsigned int sonar() const { return m_sonar; }
 	
 private:
 	int m_water = 5;
@@ -103,6 +101,26 @@ public:
 	stuff(StudentWorld* sw, int image, int x, int y, Direction dir = right, float size = 1.0, int depth = 2) : Actor(sw, image, x, y, dir, size, depth)
 	{}
 
+};
+
+class activeStuff : public stuff
+{
+public:
+	activeStuff(StudentWorld* sw, int image, int x, int y, int points, int sound = SOUND_GOT_GOODIE, bool visible = true) : stuff(sw, image, x, y, right, 1.0, 2)
+	{
+		setVisible(visible);
+		m_sound = sound;
+		m_points = points;
+		m_visible = visible;
+	}
+
+	virtual void doSomething();
+
+private:
+	int m_sound;
+	int m_points;
+	bool m_visible;
+	virtual void changeAmount() = 0;
 };
 
 class Protester : public Actor //can be annoyed, set dead, and pick up gold
@@ -287,30 +305,14 @@ public: //squirt image, (x,y) location specified by frackman, travel distance of
 	*/
 };
 
-class oil : public stuff//cannot be annoyed, can be set dead
+class oil : public activeStuff
 {
-public: // barrel image, (x,y) location specified, facing right, start out invisible(frackman must walk close to become visible), depth 2, size 1
-	oil(StudentWorld* sw, int x, int y) : stuff(sw, IID_BARREL, x, y)
+public: 
+	oil(StudentWorld* sw, int x, int y) : activeStuff(sw, IID_BARREL, x, y, 1000, SOUND_FOUND_OIL, false)
 	{}
-/*
-	virtual void doSomething()
-	{
-		if (isDead())
-			return;
-		else if (!isVisible()) //&& FrackMan <= a radius of 4 units away) cant use isVisible()
-		{
-			setVisible(true);
-			return;
-		}
-		else if (isDead())//frackman is <= a radius of 3 units away)
-		{ 
-			setDead();
-			//getWorld()->playSound(SOUND_FOUND_OIL); //play found oil sound
-			//getWorld()->increaseScore(1000);//increase player score by 1000
-			//getWorld()->removeOil();//if necessary, inform studentworld that it has been picked up //once all barrels are picked up, the player moves on to the next level
-		}
-	}
-	*///will not block squirts(squirts pass over them)
+
+private:
+	virtual void changeAmount();
 };
 
 class rock : public stuff//can be set dead but not annoyed
@@ -340,28 +342,23 @@ public: //rock image, (x,y) location specified by studentworld, start out in a s
 	*/
 };
 
-class gold : public stuff //can be set dead but not annoyed
+class gold : public activeStuff //can be set dead but not annoyed
 {
-public:  //gold image, location specified, facing right, may start visible or invisible(only starts visible if dropped by frackman), may be pickuppable by frackman or protesters
-		 //but not both (in the field-frackman, dropped by frackman-protesters), must start as permanent or temporary, depth 2, size 1
-	gold(StudentWorld* sw, int x, int y) : stuff(sw, IID_GOLD, x, y)
-	{
-	 
-	}
-		 /*
-	doSomething()
-	{
-		if (dead)
-			return;
-		else if (currently invisible && frackman <= a radius of 4 units away)
-			setVisible(true)
-			return;
-		else if (gold can be picked up by frackman && frackman is <= a radius of 3 units away)
-			set dead
-			play got goodie sound
-			increase player score by 10 (done by either frackman or gold class)
-			tell frackman that he got a gold nugget
-		else if (gold can be picked up by protesters && a protester is <= a radius of 3 units away) ////only one protester can be bribed per gold!!!
+public:  
+	gold(StudentWorld* sw, int x, int y) : activeStuff(sw, IID_GOLD, x, y, 10, SOUND_GOT_GOODIE, false)
+	{}
+
+private:
+	virtual void changeAmount();
+};
+
+class goldDrop : public activeStuff
+{
+public:
+	goldDrop(StudentWorld* sw, int x, int y) : activeStuff(sw, IID_GOLD, x, y, 10, SOUND_GOT_GOODIE)
+	{}
+	/*   100 gameticks lifetime!!!
+else if (gold can be picked up by protesters && a protester is <= a radius of 3 units away) ////only one protester can be bribed per gold!!!
 			set dead
 			play protester found gold sound
 			increase player score by 25 (done by either protester or gold class)
@@ -369,50 +366,46 @@ public:  //gold image, location specified, facing right, may start visible or in
 		if (gold is in a temporary state)
 			if (lifetime has elapsed)
 				set dead;
-	*/
+				*/
+	virtual void doSomething()
+	{}
+
+private:
+	virtual void changeAmount() {}
 };
 
-class sonar : public stuff//cannot be annoyed
+class tempGoodie : public activeStuff//cannot be annoyed
 {
 public: // sonar image, location specified, facing right, setVisible(true), only frackman can pick up, always start in a temporary state 
 	    //for T = max(100, 300 – 10*current_level_number) ticks, depth 2, size 1
-	sonar(StudentWorld* sw, int x, int y) : stuff(sw, IID_SONAR, x, y)
-	{}
-		/*
-	doSomething()
-	{
-		if (dead)
-			return;
-		if (lifetime has elapsed)
-			set dead;
-		else if ( frackman is <= a radius of 3 units away)
-			set dead
-			play got goodie sound
-			increase player score by 75 (by frackman or sonar class)
-	}
-	*/
+	tempGoodie(StudentWorld* sw, int image, int x, int y, int points);
+		
+	virtual void doSomething();
+	
+private:
+	int m_lifeTime;
 };
 
-class water : public stuff //cannot be annoyed
+class sonar : public tempGoodie//cannot be annoyed
+{
+public: // sonar image, location specified, facing right, setVisible(true), only frackman can pick up, always start in a temporary state 
+		//for T = max(100, 300 – 10*current_level_number) ticks, depth 2, size 1
+	sonar(StudentWorld* sw) : tempGoodie(sw, IID_SONAR, 0, 60, 75)
+	{}
+
+private:
+	virtual void changeAmount();
+};
+
+class water : public tempGoodie //cannot be annoyed
 {
 public: // water pool image, location specified, facing right, setVisible(true), only frackman can pick up, always start in a temporary state 
 	    //for T = max(100, 300 – 10*current_level_number) ticks, depth 2, size 1
-	water(StudentWorld* sw, int x, int y) : stuff(sw, IID_WATER_POOL, x, y)
+	water(StudentWorld* sw, int x, int y) : tempGoodie(sw, IID_WATER_POOL, x, y, 100)
 	{}
-		/*
-		doSomething()
-		{
-			if (dead)
-				return;
-			if (lifetime has elapsed)
-				set dead;
-			else if ( frackman is <= a radius of 3 units away)
-				set dead
-				play got goodie sound
-				tell frackman to increase water inventory by 5
-				increase player score by 100 (by frackman or water class)
-		}
-		*/
+
+private:
+	virtual void changeAmount();
 };
 
 #endif // ACTOR_H_
