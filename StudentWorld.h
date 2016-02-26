@@ -27,7 +27,13 @@ public:
 
 	virtual void cleanUp();
 
-	
+	void giveWater();
+	void giveGold();
+	void giveSonar();
+
+	void useSonar();
+	void placeGold();
+
 	void removeDirt();
 
 	void setDisplayText();
@@ -44,6 +50,8 @@ public:
 	double distance(int a, int b);
 	
 	bool radius(int a, int b, double rad);  ////checks if there's something within rad distance inclusive
+
+	bool frckRadius(int a, int b, double rad);
 
 	void removeOil() { m_oil--; }
 
